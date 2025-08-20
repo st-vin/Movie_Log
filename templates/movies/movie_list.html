@@ -1,0 +1,619 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Movies - Movie Catalog{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filter-sidebar {
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 1.5rem;
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--border-color);
+        position: sticky;
+        top: 100px;
+        max-height: calc(100vh - 120px);
+        overflow-y: auto;
+    }
+    
+    .filter-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .filter-group:last-child {
+        margin-bottom: 0;
+    }
+    
+    .filter-title {
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .movie-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 2rem;
+    }
+    
+    .movie-card {
+        background: var(--card-bg);
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        border: 1px solid var(--border-color);
+        backdrop-filter: blur(10px);
+        position: relative;
+    }
+    
+    .movie-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 40px var(--shadow-heavy);
+        border-color: var(--primary-color);
+    }
+    
+    .movie-poster {
+        width: 100%;
+        height: 350px;
+        object-fit: cover;
+        transition: all 0.3s ease;
+    }
+    
+    .movie-card:hover .movie-poster {
+        transform: scale(1.05);
+        filter: brightness(1.1);
+    }
+    
+    .movie-info {
+        padding: 1.5rem;
+    }
+    
+    .movie-title {
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+        line-height: 1.3;
+    }
+    
+    .movie-meta {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+    
+    .movie-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1rem;
+    }
+    
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        border: 1px solid;
+    }
+    
+    .rating-display {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .view-toggle {
+        display: flex;
+        background: var(--card-bg);
+        border-radius: 8px;
+        padding: 0.25rem;
+        border: 1px solid var(--border-color);
+    }
+    
+    .view-toggle button {
+        background: none;
+        border: none;
+        padding: 0.5rem 1rem;
+        color: var(--text-secondary);
+        border-radius: 6px;
+        transition: all 0.2s ease;
+    }
+    
+    .view-toggle button.active {
+        background: var(--primary-color);
+        color: white;
+    }
+    
+    .list-view .movie-card {
+        display: flex;
+        margin-bottom: 1.5rem;
+        height: 200px;
+    }
+    
+    .list-view .movie-poster {
+        width: 140px;
+        height: 100%;
+        flex-shrink: 0;
+    }
+    
+    .list-view .movie-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    
+    .sort-dropdown {
+        min-width: 200px;
+    }
+    
+    .results-info {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+    
+    .no-results {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-secondary);
+    }
+    
+    .no-results i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    @media (max-width: 768px) {
+        .filter-sidebar {
+            position: static;
+            margin-bottom: 2rem;
+        }
+        
+        .movie-grid {
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .list-view .movie-card {
+            flex-direction: column;
+            height: auto;
+        }
+        
+        .list-view .movie-poster {
+            width: 100%;
+            height: 250px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Filters Sidebar -->
+        <div class="col-lg-3 col-md-4" id="filters-column">
+            <div class="filter-sidebar">
+                <h5 class="mb-3">
+                    <i class="fas fa-filter me-2"></i>Filters
+                </h5>
+                
+                <form method="GET" id="filter-form">
+                    <!-- Search -->
+                    <div class="filter-group">
+                        <label class="filter-title">Search</label>
+                        <input type="text" 
+                               name="search" 
+                               class="form-control" 
+                               placeholder="Title, director, cast..." 
+                               value="{{ search_query }}">
+                    </div>
+                    
+                    <!-- Status -->
+                    <div class="filter-group">
+                        <label class="filter-title">Watch Status</label>
+                        <select name="status" class="form-control">
+                            <option value="">All Statuses</option>
+                            {% for value, label in status_choices %}
+                                <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Genre -->
+                    <div class="filter-group">
+                        <label class="filter-title">Genre</label>
+                        <select name="genre" class="form-control">
+                            <option value="">All Genres</option>
+                            {% for genre in available_genres %}
+                                <option value="{{ genre }}" {% if genre_filter == genre %}selected{% endif %}>
+                                    {{ genre }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Mood -->
+                    <div class="filter-group">
+                        <label class="filter-title">Mood</label>
+                        <select name="mood" class="form-control">
+                            <option value="">All Moods</option>
+                            {% for mood in available_moods %}
+                                <option value="{{ mood }}" {% if mood_filter == mood %}selected{% endif %}>
+                                    {{ mood }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Year Range -->
+                    <div class="filter-group">
+                        <label class="filter-title">Year Range</label>
+                        <div class="row">
+                            <div class="col-6">
+                                <input type="number" 
+                                       name="year_from" 
+                                       class="form-control" 
+                                       placeholder="From" 
+                                       value="{{ year_from }}"
+                                       min="1888" 
+                                       max="2030">
+                            </div>
+                            <div class="col-6">
+                                <input type="number" 
+                                       name="year_to" 
+                                       class="form-control" 
+                                       placeholder="To" 
+                                       value="{{ year_to }}"
+                                       min="1888" 
+                                       max="2030">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Rating -->
+                    <div class="filter-group">
+                        <label class="filter-title">Minimum Rating</label>
+                        <select name="min_rating" class="form-control">
+                            <option value="">Any Rating</option>
+                            {% for i in "12345678910"|make_list %}
+                                <option value="{{ i }}" {% if min_rating == i %}selected{% endif %}>
+                                    {{ i }}+ Stars
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Sort -->
+                    <div class="filter-group">
+                        <label class="filter-title">Sort By</label>
+                        <select name="sort" class="form-control">
+                            <option value="-created_at" {% if sort_by == "-created_at" %}selected{% endif %}>Newest First</option>
+                            <option value="created_at" {% if sort_by == "created_at" %}selected{% endif %}>Oldest First</option>
+                            <option value="movie_name" {% if sort_by == "movie_name" %}selected{% endif %}>Title A-Z</option>
+                            <option value="-movie_name" {% if sort_by == "-movie_name" %}selected{% endif %}>Title Z-A</option>
+                            <option value="director" {% if sort_by == "director" %}selected{% endif %}>Director A-Z</option>
+                            <option value="-director" {% if sort_by == "-director" %}selected{% endif %}>Director Z-A</option>
+                            <option value="-release_year" {% if sort_by == "-release_year" %}selected{% endif %}>Year (Newest)</option>
+                            <option value="release_year" {% if sort_by == "release_year" %}selected{% endif %}>Year (Oldest)</option>
+                            <option value="-user_rating" {% if sort_by == "-user_rating" %}selected{% endif %}>Rating (Highest)</option>
+                            <option value="user_rating" {% if sort_by == "user_rating" %}selected{% endif %}>Rating (Lowest)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-2"></i>Apply Filters
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="clear-filters">
+                            <i class="fas fa-times me-2"></i>Clear All
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-lg-9 col-md-8" id="main-column">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-film me-2"></i>Your Movies
+                    </h2>
+                    <div class="results-info">
+                        {% if movies %}
+                            Showing {{ movies|length }} of {{ paginator.count }} movie{{ paginator.count|pluralize }}
+                        {% else %}
+                            No movies found
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Filters Toggle -->
+                    <button type="button" class="btn btn-outline-secondary" id="toggle-filters">
+                        <i class="fas fa-sliders-h me-2"></i>Hide Filters
+                    </button>
+                    <!-- View Toggle -->
+                    <div class="view-toggle">
+                        <button type="button" class="active" data-view="grid">
+                            <i class="fas fa-th"></i>
+                        </button>
+                        <button type="button" data-view="list">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Add Movie Button -->
+                    <a href="{% url 'movies:add_movie' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add Movie
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Movies Grid -->
+            {% if movies %}
+                <div class="movie-grid stagger-animation" id="movies-container">
+                    {% for movie in movies %}
+                        <div class="movie-card" data-movie-id="{{ movie.id }}">
+                            <a href="{% url 'movies:movie_detail' movie.pk %}" class="text-decoration-none">
+                                {% if movie.poster_url %}
+                                    <img src="{{ MEDIA_URL }}{{ movie.poster_url }}" 
+                                         alt="{{ movie.movie_name }}" 
+                                         class="movie-poster"
+                                         loading="lazy">
+                                {% else %}
+                                    <div class="movie-poster bg-secondary d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-film fa-4x text-muted"></i>
+                                    </div>
+                                {% endif %}
+                                
+                                <!-- Status Indicator -->
+                                <div class="status-indicator status-{{ movie.status|slugify }}">
+                                    {{ movie.get_status_display }}
+                                </div>
+                            </a>
+                            
+                            <div class="movie-info">
+                                <h5 class="movie-title">
+                                    <a href="{% url 'movies:movie_detail' movie.pk %}" class="text-decoration-none text-inherit">
+                                        {{ movie.movie_name }}
+                                    </a>
+                                </h5>
+                                
+                                <div class="movie-meta">
+                                    <div><strong>{{ movie.director }}</strong></div>
+                                    <div>{{ movie.release_year }}</div>
+                                    {% if movie.genres %}
+                                        <div class="mt-1">
+                                            {% for genre in movie.genres|slice:":3" %}
+                                                <span class="badge bg-secondary me-1">{{ genre }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="movie-actions">
+                                    <div class="rating-display">
+                                        {% if movie.user_rating %}
+                                            <span class="text-warning">
+                                                <i class="fas fa-star"></i> {{ movie.user_rating }}
+                                            </span>
+                                        {% endif %}
+                                        
+                                        {% if movie.hype_score > 0 %}
+                                            <span class="hype-score">
+                                                <i class="fas fa-fire"></i> {{ movie.hype_score }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                                type="button" 
+                                                data-bs-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-dark">
+                                            <li>
+                                                <a class="dropdown-item" href="{% url 'movies:movie_detail' movie.pk %}">
+                                                    <i class="fas fa-eye me-2"></i>View Details
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <button class="dropdown-item" onclick="refreshMetadata({{ movie.id }})">
+                                                    <i class="fas fa-sync me-2"></i>Refresh Metadata
+                                                </button>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <button class="dropdown-item text-danger">
+                                                    <i class="fas fa-trash me-2"></i>Delete
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <!-- Mood Tags -->
+                                {% if movie.mood_tags %}
+                                    <div class="mt-2">
+                                        {% for tag in movie.mood_tags|slice:":4" %}
+                                            <span class="mood-tag">{{ tag }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Pagination -->
+                {% if is_paginated %}
+                    <nav aria-label="Movie pagination" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">
+                                        <i class="fas fa-angle-double-left"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">
+                                        <i class="fas fa-angle-left"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">
+                                        <i class="fas fa-angle-right"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}">
+                                        <i class="fas fa-angle-double-right"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <!-- No Results -->
+                <div class="no-results">
+                    <i class="fas fa-search"></i>
+                    <h3>No Movies Found</h3>
+                    <p>Try adjusting your filters or search terms.</p>
+                    <div class="mt-3">
+                        <a href="{% url 'movies:movie_list' %}" class="btn btn-outline-primary me-2">
+                            <i class="fas fa-times me-2"></i>Clear Filters
+                        </a>
+                        <a href="{% url 'movies:add_movie' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Add Movie
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // View toggle functionality
+    const viewButtons = document.querySelectorAll('.view-toggle button');
+    const moviesContainer = document.getElementById('movies-container');
+    const filtersColumn = document.getElementById('filters-column');
+    const mainColumn = document.getElementById('main-column');
+    const toggleFiltersBtn = document.getElementById('toggle-filters');
+    
+    viewButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            viewButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            const view = this.dataset.view;
+            if (view === 'list') {
+                moviesContainer.classList.add('list-view');
+            } else {
+                moviesContainer.classList.remove('list-view');
+            }
+            
+            // Save preference
+            localStorage.setItem('movieViewMode', view);
+        });
+    });
+    
+    // Load saved view preference
+    const savedView = localStorage.getItem('movieViewMode');
+    if (savedView === 'list') {
+        document.querySelector('[data-view="list"]').click();
+    }
+    
+    // Filters sidebar toggle
+    function setFiltersHidden(hidden) {
+        if (!filtersColumn || !mainColumn || !toggleFiltersBtn) return;
+        if (hidden) {
+            filtersColumn.classList.add('d-none');
+            mainColumn.classList.remove('col-lg-9', 'col-md-8');
+            mainColumn.classList.add('col-12');
+            toggleFiltersBtn.innerHTML = '<i class="fas fa-sliders-h me-2"></i>Show Filters';
+        } else {
+            filtersColumn.classList.remove('d-none');
+            mainColumn.classList.add('col-lg-9', 'col-md-8');
+            mainColumn.classList.remove('col-12');
+            toggleFiltersBtn.innerHTML = '<i class="fas fa-sliders-h me-2"></i>Hide Filters';
+        }
+        localStorage.setItem('filtersHidden', hidden ? '1' : '0');
+    }
+    
+    if (toggleFiltersBtn) {
+        toggleFiltersBtn.addEventListener('click', function() {
+            const willHide = !filtersColumn.classList.contains('d-none');
+            setFiltersHidden(willHide);
+        });
+    }
+    
+    const savedFiltersHidden = localStorage.getItem('filtersHidden');
+    setFiltersHidden(savedFiltersHidden === '1');
+    
+    // Auto-submit form on filter changes
+    const filterForm = document.getElementById('filter-form');
+    const filterInputs = filterForm.querySelectorAll('input, select');
+    
+    filterInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            // Debounce text inputs
+            if (this.type === 'text' || this.type === 'number') {
+                clearTimeout(this.debounceTimer);
+                this.debounceTimer = setTimeout(() => {
+                    filterForm.submit();
+                }, 500);
+            } else {
+                filterForm.submit();
+            }
+        });
+    });
+    
+    // Clear filters
+    document.getElementById('clear-filters').addEventListener('click', function() {
+        filterForm.reset();
+        window.location.href = '{% url "movies:movie_list" %}';
+    });
+});
+
+// Global function for refreshing metadata
+function refreshMetadata(movieId) {
+    if (window.MovieCatalog) {
+        window.MovieCatalog.refreshMetadata(movieId);
+    }
+}
+</script>
+{% endblock %}
+

@@ -1,0 +1,718 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}CSV Import - Movie Catalog{% endblock %}
+
+{% block extra_css %}
+<style>
+    .csv-import-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .form-card {
+        background: var(--card-bg);
+        border-radius: 16px;
+        padding: 3rem;
+        border: 1px solid var(--border-color);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 10px 30px var(--shadow-light);
+    }
+    
+    .form-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+    
+    .form-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 1rem;
+    }
+    
+    .form-subtitle {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .csv-guide {
+        background: var(--glass-bg);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid var(--border-color);
+        backdrop-filter: blur(5px);
+    }
+    
+    .guide-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .csv-format-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        background: var(--darker-bg);
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+    }
+    
+    .csv-format-table th,
+    .csv-format-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .csv-format-table th {
+        background: var(--primary-color);
+        color: white;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .csv-format-table td {
+        color: var(--text-primary);
+    }
+    
+    .csv-format-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .required-column {
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+    
+    .optional-column {
+        color: var(--text-secondary);
+    }
+    
+    .csv-example {
+        background: var(--darker-bg);
+        border-radius: 8px;
+        padding: 1.5rem;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        line-height: 1.6;
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        margin: 1rem 0;
+        position: relative;
+        overflow-x: auto;
+    }
+    
+    .download-template {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--secondary-color);
+        color: var(--darker-bg);
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        margin: 1rem 0;
+    }
+    
+    .download-template:hover {
+        background: #e6b800;
+        color: var(--darker-bg);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(245, 197, 24, 0.3);
+    }
+    
+    .file-upload-area {
+        border: 2px dashed var(--border-color);
+        border-radius: 12px;
+        padding: 3rem 2rem;
+        text-align: center;
+        background: var(--glass-bg);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .file-upload-area:hover,
+    .file-upload-area.dragover {
+        border-color: var(--primary-color);
+        background: var(--hover-color);
+        transform: translateY(-2px);
+    }
+    
+    .file-upload-area.dragover::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(229, 9, 20, 0.1);
+        pointer-events: none;
+    }
+    
+    .upload-icon {
+        font-size: 3rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+    
+    .upload-text {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+    }
+    
+    .upload-hint {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+    
+    .file-input {
+        position: absolute;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+    
+    .selected-file {
+        background: var(--card-bg);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+        border: 1px solid var(--border-color);
+        display: none;
+    }
+    
+    .file-info {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .file-details {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .file-icon {
+        font-size: 2rem;
+        color: var(--success-color);
+    }
+    
+    .file-meta {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin-top: 0.25rem;
+    }
+    
+    .remove-file {
+        background: var(--danger-color);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .remove-file:hover {
+        background: #c82333;
+        transform: scale(1.1);
+    }
+    
+    .import-options {
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 2rem;
+        margin: 2rem 0;
+        border: 1px solid var(--border-color);
+        backdrop-filter: blur(10px);
+    }
+    
+    .options-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+    }
+    
+    .option-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .option-group:last-child {
+        margin-bottom: 0;
+    }
+    
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .form-check-input {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--primary-color);
+    }
+    
+    .form-check-label {
+        color: var(--text-primary);
+        font-weight: 500;
+        cursor: pointer;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 3rem;
+    }
+    
+    .btn-submit {
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 50px;
+        min-width: 150px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-submit:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    .progress-section {
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-top: 2rem;
+        border: 1px solid var(--border-color);
+        backdrop-filter: blur(10px);
+        display: none;
+    }
+    
+    .progress-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+    }
+    
+    .progress {
+        height: 8px;
+        background: var(--border-color);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 1rem;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+    
+    .progress-text {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        text-align: center;
+    }
+    
+    @media (max-width: 768px) {
+        .form-card {
+            padding: 2rem 1.5rem;
+        }
+        
+        .form-title {
+            font-size: 2rem;
+        }
+        
+        .file-upload-area {
+            padding: 2rem 1rem;
+        }
+        
+        .csv-format-table {
+            font-size: 0.8rem;
+        }
+        
+        .csv-format-table th,
+        .csv-format-table td {
+            padding: 0.75rem 0.5rem;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .btn-submit {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="csv-import-container">
+        <div class="form-card fade-in-scale">
+            <div class="form-header">
+                <h1 class="form-title">Import from CSV</h1>
+                <p class="form-subtitle">Import your movie collection from a CSV file</p>
+            </div>
+            
+            <!-- CSV Format Guide -->
+            <div class="csv-guide fade-in-up">
+                <div class="guide-title">
+                    <i class="fas fa-info-circle"></i>CSV Format Requirements
+                </div>
+                
+                <p>Your CSV file should contain the following columns:</p>
+                
+                <table class="csv-format-table">
+                    <thead>
+                        <tr>
+                            <th>Column Name</th>
+                            <th>Required</th>
+                            <th>Description</th>
+                            <th>Example</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="required-column">title</td>
+                            <td class="required-column">Yes</td>
+                            <td>Movie title</td>
+                            <td>The Matrix</td>
+                        </tr>
+                        <tr>
+                            <td class="required-column">director</td>
+                            <td class="required-column">Yes</td>
+                            <td>Director name</td>
+                            <td>The Wachowskis</td>
+                        </tr>
+                        <tr>
+                            <td class="optional-column">year</td>
+                            <td class="optional-column">No</td>
+                            <td>Release year</td>
+                            <td>1999</td>
+                        </tr>
+                        <tr>
+                            <td class="optional-column">status</td>
+                            <td class="optional-column">No</td>
+                            <td>Watch status</td>
+                            <td>Watched</td>
+                        </tr>
+                        <tr>
+                            <td class="optional-column">user_rating</td>
+                            <td class="optional-column">No</td>
+                            <td>Your rating (1-10)</td>
+                            <td>9</td>
+                        </tr>
+                        <tr>
+                            <td class="optional-column">user_notes</td>
+                            <td class="optional-column">No</td>
+                            <td>Personal notes</td>
+                            <td>Amazing sci-fi movie</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="csv-example">
+title,director,year,status,user_rating,user_notes
+The Matrix,The Wachowskis,1999,Watched,9,Amazing sci-fi movie
+Pulp Fiction,Quentin Tarantino,1994,Watched,10,Classic Tarantino
+Inception,Christopher Nolan,2010,Want to Watch,,Need to rewatch
+                </div>
+                
+                <a href="#" class="download-template" onclick="downloadTemplate()">
+                    <i class="fas fa-download"></i>Download CSV Template
+                </a>
+            </div>
+            
+            <!-- File Upload -->
+            <form method="post" enctype="multipart/form-data" id="csv-import-form">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-file-csv"></i>Select CSV File
+                    </label>
+                    
+                    <div class="file-upload-area" id="file-upload-area">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <div class="upload-text">Click to select or drag & drop your CSV file</div>
+                        <div class="upload-hint">Maximum file size: 5MB</div>
+                        
+                        {{ form.csv_file }}
+                    </div>
+                    
+                    <div class="selected-file" id="selected-file">
+                        <div class="file-info">
+                            <div class="file-details">
+                                <div class="file-icon">
+                                    <i class="fas fa-file-csv"></i>
+                                </div>
+                                <div>
+                                    <div class="file-name"></div>
+                                    <div class="file-meta"></div>
+                                </div>
+                            </div>
+                            <button type="button" class="remove-file" onclick="removeFile()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    {% if form.csv_file.errors %}
+                        <div class="text-danger mt-2">
+                            {% for error in form.csv_file.errors %}
+                                <div><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Import Options -->
+                <div class="import-options">
+                    <div class="options-title">
+                        <i class="fas fa-cog me-2"></i>Import Options
+                    </div>
+                    
+                    <div class="option-group">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="skip-duplicates" checked>
+                            <label class="form-check-label" for="skip-duplicates">
+                                Skip duplicate movies (same title and director)
+                            </label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="fetch-metadata" checked>
+                            <label class="form-check-label" for="fetch-metadata">
+                                Automatically fetch metadata after import
+                            </label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="validate-data">
+                            <label class="form-check-label" for="validate-data">
+                                Validate data before import (slower but safer)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-submit" disabled>
+                        <i class="fas fa-upload me-2"></i>Import Movies
+                    </button>
+                    <a href="{% url 'movies:movie_list' %}" class="btn btn-outline-secondary btn-submit">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </a>
+                </div>
+            </form>
+            
+            <!-- Progress Section -->
+            <div class="progress-section" id="progress-section">
+                <div class="progress-title">Importing Movies...</div>
+                <div class="progress">
+                    <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+                </div>
+                <div class="progress-text" id="progress-text">Preparing import...</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('csv-import-form');
+    const fileInput = document.getElementById('{{ form.csv_file.id_for_label }}');
+    const uploadArea = document.getElementById('file-upload-area');
+    const selectedFile = document.getElementById('selected-file');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const progressSection = document.getElementById('progress-section');
+    
+    // File upload handling
+    fileInput.addEventListener('change', handleFileSelect);
+    
+    // Drag and drop
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            handleFileSelect();
+        }
+    });
+    
+    function handleFileSelect() {
+        const file = fileInput.files[0];
+        
+        if (file) {
+            // Validate file type
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                alert('Please select a CSV file.');
+                fileInput.value = '';
+                return;
+            }
+            
+            // Validate file size (5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File size must be less than 5MB.');
+                fileInput.value = '';
+                return;
+            }
+            
+            // Show selected file
+            selectedFile.style.display = 'block';
+            uploadArea.style.display = 'none';
+            
+            selectedFile.querySelector('.file-name').textContent = file.name;
+            selectedFile.querySelector('.file-meta').textContent = 
+                `${(file.size / 1024).toFixed(1)} KB • ${new Date(file.lastModified).toLocaleDateString()}`;
+            
+            submitBtn.disabled = false;
+        }
+    }
+    
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        if (!fileInput.files[0]) {
+            e.preventDefault();
+            alert('Please select a CSV file.');
+            return;
+        }
+        
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Importing...';
+        
+        // Show progress section
+        progressSection.style.display = 'block';
+        
+        // Simulate progress (since we can't track real progress easily)
+        let progress = 0;
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        
+        const progressInterval = setInterval(() => {
+            progress += Math.random() * 10;
+            if (progress > 90) progress = 90;
+            
+            progressBar.style.width = progress + '%';
+            
+            if (progress < 30) {
+                progressText.textContent = 'Reading CSV file...';
+            } else if (progress < 60) {
+                progressText.textContent = 'Validating movie data...';
+            } else if (progress < 90) {
+                progressText.textContent = 'Adding movies to database...';
+            }
+        }, 500);
+        
+        // Clear interval after 30 seconds
+        setTimeout(() => {
+            clearInterval(progressInterval);
+            progressBar.style.width = '100%';
+            progressText.textContent = 'Finalizing import...';
+        }, 30000);
+    });
+    
+    // Add entrance animations
+    const elements = document.querySelectorAll('.fade-in-up, .fade-in-scale');
+    elements.forEach((el, index) => {
+        el.style.animationDelay = `${index * 0.1}s`;
+    });
+});
+
+// Global functions
+function removeFile() {
+    const fileInput = document.getElementById('{{ form.csv_file.id_for_label }}');
+    const uploadArea = document.getElementById('file-upload-area');
+    const selectedFile = document.getElementById('selected-file');
+    const submitBtn = document.querySelector('button[type="submit"]');
+    
+    fileInput.value = '';
+    selectedFile.style.display = 'none';
+    uploadArea.style.display = 'block';
+    submitBtn.disabled = true;
+}
+
+function downloadTemplate() {
+    const csvContent = `title,director,year,status,user_rating,user_notes
+The Matrix,The Wachowskis,1999,Watched,9,Amazing sci-fi movie
+Pulp Fiction,Quentin Tarantino,1994,Watched,10,Classic Tarantino
+Inception,Christopher Nolan,2010,Want to Watch,,Need to rewatch
+The Godfather,Francis Ford Coppola,1972,Watched,10,Masterpiece
+Parasite,Bong Joon-ho,2019,Watched,9,Brilliant social commentary`;
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'movie_catalog_template.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+    // Show feedback
+    const btn = document.querySelector('.download-template');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check me-2"></i>Downloaded!';
+    btn.style.background = 'var(--success-color)';
+    
+    setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.style.background = 'var(--secondary-color)';
+    }, 2000);
+}
+</script>
+{% endblock %}
+

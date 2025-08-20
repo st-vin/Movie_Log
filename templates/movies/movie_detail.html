@@ -1,0 +1,677 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ movie.movie_name }} - Movie Catalog{% endblock %}
+
+{% block extra_css %}
+<style>
+    .movie-hero {
+        position: relative;
+        background: linear-gradient(135deg, var(--darker-bg) 0%, var(--dark-bg) 100%);
+        padding: 3rem 0;
+        margin-bottom: 3rem;
+        overflow: hidden;
+    }
+    
+    .movie-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.5));
+        z-index: 1;
+    }
+    
+    .movie-hero-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-size: cover;
+        background-position: center;
+        filter: blur(20px) brightness(0.3);
+        transform: scale(1.1);
+    }
+    
+    .movie-hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .movie-poster-large {
+        width: 100%;
+        max-width: 300px;
+        border-radius: 12px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        transition: transform 0.3s ease;
+    }
+    
+    .movie-poster-large:hover {
+        transform: scale(1.05);
+    }
+    
+    .movie-title-large {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+    
+    .movie-tagline {
+        font-size: 1.2rem;
+        color: var(--secondary-color);
+        font-style: italic;
+        margin-bottom: 1.5rem;
+    }
+    
+    .movie-meta-large {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .meta-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .meta-label {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.25rem;
+    }
+    
+    .meta-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    
+    .rating-section {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .rating-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem;
+        background: var(--card-bg);
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        backdrop-filter: blur(10px);
+        min-width: 100px;
+    }
+    
+    .rating-score {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+    
+    .rating-source {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+    }
+    
+    .imdb-rating { color: #f5c518; }
+    .rt-rating { color: #fa320a; }
+    .user-rating { color: #e50914; }
+    
+    .status-controls {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .status-select {
+        min-width: 150px;
+    }
+    
+    .user-rating-stars {
+        display: flex;
+        gap: 0.25rem;
+    }
+    
+    .user-rating-stars .rating-star {
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: var(--text-secondary);
+    }
+    
+    .user-rating-stars .rating-star:hover,
+    .user-rating-stars .rating-star.filled {
+        color: #ffc107;
+        transform: scale(1.1);
+    }
+    
+    .synopsis-section {
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid var(--border-color);
+        backdrop-filter: blur(10px);
+    }
+    
+    .cast-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .cast-member {
+        text-align: center;
+        padding: 1rem;
+        background: var(--card-bg);
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        transition: transform 0.2s ease;
+    }
+    
+    .cast-member:hover {
+        transform: translateY(-2px);
+    }
+    
+    .cast-photo {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-bottom: 0.5rem;
+        border: 2px solid var(--border-color);
+    }
+    
+    .cast-name {
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .cast-character {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+    
+    .mood-tags-section {
+        margin-bottom: 2rem;
+    }
+    
+    .mood-tag-large {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        margin: 0.25rem;
+        background: var(--glass-bg);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 25px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(5px);
+    }
+    
+    .mood-tag-large:hover {
+        background: var(--hover-color);
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+    }
+    
+    .notes-section {
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid var(--border-color);
+        backdrop-filter: blur(10px);
+    }
+    
+    .related-movies {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+    
+    .related-movie {
+        text-align: center;
+        transition: transform 0.2s ease;
+    }
+    
+    .related-movie:hover {
+        transform: translateY(-5px);
+    }
+    
+    .related-poster {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .related-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        line-height: 1.2;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+    }
+    
+    @media (max-width: 768px) {
+        .movie-title-large {
+            font-size: 2rem;
+        }
+        
+        .movie-meta-large {
+            gap: 1rem;
+        }
+        
+        .rating-section {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .status-controls {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .cast-grid {
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        }
+        
+        .related-movies {
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Movie Hero Section -->
+<section class="movie-hero">
+    {% if movie.poster_url %}
+        <div class="movie-hero-bg" style="background-image: url('{{ MEDIA_URL }}{{ movie.poster_url }}');"></div>
+    {% endif %}
+    
+    <div class="container">
+        <div class="movie-hero-content">
+            <div class="row align-items-center">
+                <div class="col-md-4 text-center mb-4 mb-md-0">
+                    {% if movie.poster_url %}
+                        <img src="{{ MEDIA_URL }}{{ movie.poster_url }}" 
+                             alt="{{ movie.movie_name }}" 
+                             class="movie-poster-large">
+                    {% else %}
+                        <div class="movie-poster-large bg-secondary d-flex align-items-center justify-content-center" style="height: 400px;">
+                            <i class="fas fa-film fa-5x text-muted"></i>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="col-md-8">
+                    <h1 class="movie-title-large">{{ movie.movie_name }}</h1>
+                    
+                    {% if movie.tagline %}
+                        <p class="movie-tagline">"{{ movie.tagline }}"</p>
+                    {% endif %}
+                    
+                    <div class="movie-meta-large">
+                        <div class="meta-item">
+                            <div class="meta-label">Director</div>
+                            <div class="meta-value">{{ movie.director }}</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Year</div>
+                            <div class="meta-value">{{ movie.release_year }}</div>
+                        </div>
+                        {% if movie.runtime %}
+                            <div class="meta-item">
+                                <div class="meta-label">Runtime</div>
+                                <div class="meta-value">{{ movie.runtime }} min</div>
+                            </div>
+                        {% endif %}
+                        {% if movie.budget %}
+                            <div class="meta-item">
+                                <div class="meta-label">Budget</div>
+                                <div class="meta-value">${{ movie.budget|floatformat:0 }}</div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Ratings -->
+                    <div class="rating-section">
+                        {% if movie.imdb_rating %}
+                            <div class="rating-item">
+                                <div class="rating-score imdb-rating">{{ movie.imdb_rating }}</div>
+                                <div class="rating-source">IMDb</div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if movie.rt_rating %}
+                            <div class="rating-item">
+                                <div class="rating-score rt-rating">{{ movie.rt_rating }}%</div>
+                                <div class="rating-source">Rotten Tomatoes</div>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="rating-item">
+                            <div class="rating-score user-rating">
+                                {% if movie.user_rating %}{{ movie.user_rating }}{% else %}—{% endif %}
+                            </div>
+                            <div class="rating-source">Your Rating</div>
+                        </div>
+                        
+                        {% if movie.hype_score > 0 %}
+                            <div class="rating-item">
+                                <div class="rating-score" style="color: var(--primary-color);">{{ movie.hype_score }}</div>
+                                <div class="rating-source">Hype Score</div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Status and Rating Controls -->
+                    <div class="status-controls">
+                        <select class="form-control status-select" data-movie-id="{{ movie.id }}">
+                            {% for value, label in movie.WATCH_STATUS_CHOICES %}
+                                <option value="{{ value }}" {% if movie.status == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        
+                        <div class="user-rating-stars" data-movie-id="{{ movie.id }}">
+                            {% for i in "12345678910"|make_list %}
+                                <i class="fas fa-star rating-star {% if movie.user_rating and i|add:0 <= movie.user_rating %}filled{% endif %}" 
+                                   data-rating="{{ i }}"></i>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container">
+    <!-- Synopsis -->
+    {% if movie.synopsis %}
+        <section class="synopsis-section">
+            <h3 class="mb-3">
+                <i class="fas fa-align-left me-2"></i>Synopsis
+            </h3>
+            <p class="lead">{{ movie.synopsis }}</p>
+        </section>
+    {% endif %}
+    
+    <!-- Genres -->
+    {% if movie.genres %}
+        <section class="mb-4">
+            <h4 class="mb-3">
+                <i class="fas fa-tags me-2"></i>Genres
+            </h4>
+            <div>
+                {% for genre in movie.genres %}
+                    <span class="badge bg-primary me-2 mb-2 p-2">{{ genre }}</span>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+    
+    <!-- Cast -->
+    {% if movie.cast %}
+        <section class="mb-4">
+            <h4 class="mb-3">
+                <i class="fas fa-users me-2"></i>Cast
+            </h4>
+            <div class="cast-grid">
+                {% for actor in movie.cast|slice:":12" %}
+                    <div class="cast-member">
+                        {% if actor.profile_path %}
+                            <img src="https://image.tmdb.org/t/p/w185{{ actor.profile_path }}" 
+                                 alt="{{ actor.name }}" 
+                                 class="cast-photo">
+                        {% else %}
+                            <div class="cast-photo bg-secondary d-flex align-items-center justify-content-center">
+                                <i class="fas fa-user text-muted"></i>
+                            </div>
+                        {% endif %}
+                        <div class="cast-name">{{ actor.name }}</div>
+                        {% if actor.character %}
+                            <div class="cast-character">{{ actor.character }}</div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+    
+    <!-- Mood Tags -->
+    {% if movie.mood_tags %}
+        <section class="mood-tags-section">
+            <h4 class="mb-3">
+                <i class="fas fa-heart me-2"></i>Mood Tags
+            </h4>
+            <div>
+                {% for tag in movie.mood_tags %}
+                    <span class="mood-tag-large">{{ tag }}</span>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+    
+    <!-- User Notes -->
+    {% if movie.user_notes %}
+        <section class="notes-section">
+            <h4 class="mb-3">
+                <i class="fas fa-sticky-note me-2"></i>Your Notes
+            </h4>
+            <p>{{ movie.user_notes|linebreaks }}</p>
+        </section>
+    {% endif %}
+    
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <button class="btn btn-primary" onclick="refreshMetadata({{ movie.id }})">
+            <i class="fas fa-sync me-2"></i>Refresh Metadata
+        </button>
+
+        <button class="btn btn-danger" onclick="deleteMovie({{ movie.id }})">
+            <i class="fas fa-trash me-2"></i>Delete Movie
+        </button>
+
+        <a href="{% url 'movies:movie_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Movies
+        </a>
+
+        {% if movie.imdb_id %}
+            <a href="https://www.imdb.com/title/{{ movie.imdb_id }}/" 
+               target="_blank" 
+               class="btn btn-outline-warning">
+                <i class="fab fa-imdb me-2"></i>View on IMDb
+            </a>
+        {% endif %}
+
+        {% if movie.tmdb_id %}
+            <a href="https://www.themoviedb.org/movie/{{ movie.tmdb_id }}" 
+               target="_blank" 
+               class="btn btn-outline-info">
+                <i class="fas fa-external-link-alt me-2"></i>View on TMDb
+            </a>
+        {% endif %}
+    </div>
+    
+    <!-- Related Movies -->
+    {% if related_movies %}
+        <section class="mt-5">
+            <h4 class="mb-4">
+                <i class="fas fa-film me-2"></i>Related Movies
+            </h4>
+            <div class="related-movies">
+                {% for related in related_movies %}
+                    <div class="related-movie">
+                        <a href="{% url 'movies:movie_detail' related.pk %}" class="text-decoration-none">
+                            {% if related.poster_url %}
+                                <img src="{{ MEDIA_URL }}{{ related.poster_url }}" 
+                                     alt="{{ related.movie_name }}" 
+                                     class="related-poster">
+                            {% else %}
+                                <div class="related-poster bg-secondary d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-film fa-2x text-muted"></i>
+                                </div>
+                            {% endif %}
+                            <div class="related-title text-light">{{ related.movie_name }}</div>
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Status update
+    const statusSelect = document.querySelector('.status-select');
+    if (statusSelect) {
+        statusSelect.addEventListener('change', function() {
+            const movieId = this.dataset.movieId;
+            const status = this.value;
+            
+            if (window.MovieCatalog) {
+                window.MovieCatalog.updateMovieStatus(movieId, status);
+            }
+        });
+    }
+    
+    // Rating stars
+    const ratingStars = document.querySelectorAll('.user-rating-stars .rating-star');
+    const ratingContainer = document.querySelector('.user-rating-stars');
+    
+    if (ratingContainer) {
+        const movieId = ratingContainer.dataset.movieId;
+        
+        ratingStars.forEach((star, index) => {
+            star.addEventListener('click', function() {
+                const rating = parseInt(this.dataset.rating);
+                
+                if (window.MovieCatalog) {
+                    window.MovieCatalog.updateMovieRating(movieId, rating);
+                }
+                
+                // Update visual state
+                ratingStars.forEach((s, i) => {
+                    if (i < rating) {
+                        s.classList.add('filled');
+                    } else {
+                        s.classList.remove('filled');
+                    }
+                });
+            });
+            
+            star.addEventListener('mouseenter', function() {
+                const rating = parseInt(this.dataset.rating);
+                ratingStars.forEach((s, i) => {
+                    if (i < rating) {
+                        s.style.color = '#ffc107';
+                    } else {
+                        s.style.color = 'var(--text-secondary)';
+                    }
+                });
+            });
+        });
+        
+        ratingContainer.addEventListener('mouseleave', function() {
+            // Reset to current rating
+            const currentRating = {{ movie.user_rating|default:0 }};
+            ratingStars.forEach((s, i) => {
+                if (i < currentRating) {
+                    s.style.color = '#ffc107';
+                } else {
+                    s.style.color = 'var(--text-secondary)';
+                }
+            });
+        });
+    }
+    
+    // Add entrance animations
+    const sections = document.querySelectorAll('section');
+    sections.forEach((section, index) => {
+        section.style.animationDelay = `${index * 0.1}s`;
+        section.classList.add('fade-in-up');
+    });
+});
+
+// Global function for refreshing metadata
+function refreshMetadata(movieId) {
+    if (window.MovieCatalog) {
+        window.MovieCatalog.refreshMetadata(movieId);
+    }
+}
+
+// Global function for deleting a movie
+function deleteMovie(movieId) {
+    if (!confirm('Are you sure you want to delete this movie? This action cannot be undone.')) {
+        return;
+    }
+    fetch(`/api/movie/${movieId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCSRFToken(),
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Movie deleted successfully.');
+            window.location.href = '{% url "movies:movie_list" %}';
+        } else {
+            alert('Failed to delete movie: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error deleting movie: ' + error);
+    });
+}
+
+// Helper to get CSRF token from cookie
+function getCSRFToken() {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, 10) === ('csrftoken=')) {
+                cookieValue = decodeURIComponent(cookie.substring(10));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}
+

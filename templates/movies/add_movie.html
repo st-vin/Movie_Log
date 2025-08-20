@@ -1,0 +1,507 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add Movie - Movie Catalog{% endblock %}
+
+{% block extra_css %}
+<style>
+    .add-movie-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .form-card {
+        background: var(--card-bg);
+        border-radius: 16px;
+        padding: 3rem;
+        border: 1px solid var(--border-color);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 10px 30px var(--shadow-light);
+    }
+    
+    .form-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+    
+    .form-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 1rem;
+    }
+    
+    .form-subtitle {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+    }
+    
+    .form-group {
+        margin-bottom: 2rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .form-control {
+        padding: 1rem;
+        font-size: 1rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        background: var(--card-bg);
+        border: 2px solid var(--border-color);
+        color: var(--text-primary);
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(229, 9, 20, 0.25);
+        background: var(--card-bg);
+        color: var(--text-primary);
+        transform: translateY(-2px);
+    }
+    
+    .form-control::placeholder {
+        color: var(--text-secondary);
+    }
+    
+    .form-text {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+    }
+    
+    .required-field::after {
+        content: ' *';
+        color: var(--primary-color);
+    }
+    
+    .mood-tags-input {
+        position: relative;
+    }
+    
+    .mood-suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        backdrop-filter: blur(10px);
+        z-index: 1000;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    
+    .mood-suggestion {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .mood-suggestion:hover {
+        background: var(--hover-color);
+    }
+    
+    .mood-suggestion:last-child {
+        border-bottom: none;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 3rem;
+    }
+    
+    .btn-submit {
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 50px;
+        min-width: 150px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-submit::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+    }
+    
+    .btn-submit:hover::before {
+        left: 100%;
+    }
+    
+    .quick-add-section {
+        background: var(--glass-bg);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid var(--border-color);
+        backdrop-filter: blur(5px);
+    }
+    
+    .quick-add-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+    }
+    
+    .quick-add-buttons {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .quick-add-btn {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+    
+    @media (max-width: 768px) {
+        .form-card {
+            padding: 2rem 1.5rem;
+        }
+        
+        .form-title {
+            font-size: 2rem;
+        }
+        
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .btn-submit {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="add-movie-container">
+        <!-- Quick Add Section -->
+        <div class="quick-add-section fade-in-up">
+            <div class="quick-add-title">
+                <i class="fas fa-bolt me-2"></i>Quick Actions
+            </div>
+            <div class="quick-add-buttons">
+                <a href="{% url 'movies:batch_add' %}" class="btn btn-outline-primary quick-add-btn">
+                    <i class="fas fa-list me-2"></i>Batch Add Multiple
+                </a>
+                <a href="{% url 'movies:csv_import' %}" class="btn btn-outline-secondary quick-add-btn">
+                    <i class="fas fa-file-csv me-2"></i>Import from CSV
+                </a>
+                <a href="{% url 'movies:movie_list' %}" class="btn btn-outline-info quick-add-btn">
+                    <i class="fas fa-list me-2"></i>Browse Collection
+                </a>
+            </div>
+        </div>
+        
+        <!-- Main Form -->
+        <div class="form-card fade-in-scale">
+            <div class="form-header">
+                <h1 class="form-title">Add New Movie</h1>
+                <p class="form-subtitle">Add a movie to your personal collection and we'll fetch the metadata automatically</p>
+            </div>
+            
+            <form method="post" id="add-movie-form">
+                {% csrf_token %}
+                
+                <!-- Basic Information -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.movie_name.id_for_label }}" class="form-label required-field">
+                            <i class="fas fa-film"></i>Movie Title
+                        </label>
+                        {{ form.movie_name }}
+                        {% if form.movie_name.help_text %}
+                            <div class="form-text">{{ form.movie_name.help_text }}</div>
+                        {% endif %}
+                        {% if form.movie_name.errors %}
+                            <div class="text-danger mt-2">
+                                {% for error in form.movie_name.errors %}
+                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.director.id_for_label }}" class="form-label required-field">
+                            <i class="fas fa-user-tie"></i>Director
+                        </label>
+                        {{ form.director }}
+                        {% if form.director.help_text %}
+                            <div class="form-text">{{ form.director.help_text }}</div>
+                        {% endif %}
+                        {% if form.director.errors %}
+                            <div class="text-danger mt-2">
+                                {% for error in form.director.errors %}
+                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.release_year.id_for_label }}" class="form-label">
+                            <i class="fas fa-calendar"></i>Release Year
+                        </label>
+                        {{ form.release_year }}
+                        <div class="form-text">Leave empty if unknown - we'll try to find it automatically</div>
+                        {% if form.release_year.errors %}
+                            <div class="text-danger mt-2">
+                                {% for error in form.release_year.errors %}
+                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.status.id_for_label }}" class="form-label">
+                            <i class="fas fa-bookmark"></i>Watch Status
+                        </label>
+                        {{ form.status }}
+                        <div class="form-text">Set your current watch status for this movie</div>
+                        {% if form.status.errors %}
+                            <div class="text-danger mt-2">
+                                {% for error in form.status.errors %}
+                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Optional Information -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.user_rating.id_for_label }}" class="form-label">
+                            <i class="fas fa-star"></i>Your Rating
+                        </label>
+                        {{ form.user_rating }}
+                        <div class="form-text">Rate this movie from 1 to 10 (optional)</div>
+                        {% if form.user_rating.errors %}
+                            <div class="text-danger mt-2">
+                                {% for error in form.user_rating.errors %}
+                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.mood_tags.id_for_label }}" class="form-label">
+                            <i class="fas fa-heart"></i>Mood Tags
+                        </label>
+                        <div class="mood-tags-input">
+                            {{ form.mood_tags }}
+                            <div id="mood-suggestions" class="mood-suggestions d-none"></div>
+                        </div>
+                        <div class="form-text">Add mood tags separated by commas (e.g., intense, funny, romantic)</div>
+                        {% if form.mood_tags.errors %}
+                            <div class="text-danger mt-2">
+                                {% for error in form.mood_tags.errors %}
+                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Notes -->
+                <div class="form-group">
+                    <label for="{{ form.user_notes.id_for_label }}" class="form-label">
+                        <i class="fas fa-sticky-note"></i>Your Notes
+                    </label>
+                    {{ form.user_notes }}
+                    <div class="form-text">Add any personal notes about this movie (optional)</div>
+                    {% if form.user_notes.errors %}
+                        <div class="text-danger mt-2">
+                            {% for error in form.user_notes.errors %}
+                                <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-submit">
+                        <i class="fas fa-plus me-2"></i>Add Movie
+                    </button>
+                    <a href="{% url 'movies:movie_list' %}" class="btn btn-outline-secondary btn-submit">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('add-movie-form');
+    const moodTagsInput = document.getElementById('{{ form.mood_tags.id_for_label }}');
+    const moodSuggestions = document.getElementById('mood-suggestions');
+    
+    // Common mood tags for suggestions
+    const commonMoodTags = [
+        'intense', 'funny', 'romantic', 'dark', 'uplifting', 'thrilling',
+        'emotional', 'action-packed', 'mysterious', 'heartwarming',
+        'dramatic', 'suspenseful', 'inspiring', 'nostalgic', 'quirky',
+        'thought-provoking', 'entertaining', 'gripping', 'beautiful',
+        'disturbing', 'poetic', 'energetic', 'melancholic', 'epic'
+    ];
+    
+    // Mood tags suggestions
+    if (moodTagsInput) {
+        moodTagsInput.addEventListener('input', function() {
+            const value = this.value.toLowerCase();
+            const lastTag = value.split(',').pop().trim();
+            
+            if (lastTag.length >= 2) {
+                const suggestions = commonMoodTags.filter(tag => 
+                    tag.toLowerCase().includes(lastTag) && 
+                    !value.includes(tag)
+                );
+                
+                if (suggestions.length > 0) {
+                    showMoodSuggestions(suggestions, lastTag);
+                } else {
+                    hideMoodSuggestions();
+                }
+            } else {
+                hideMoodSuggestions();
+            }
+        });
+        
+        moodTagsInput.addEventListener('blur', function() {
+            // Delay hiding to allow clicking on suggestions
+            setTimeout(() => hideMoodSuggestions(), 200);
+        });
+    }
+    
+    function showMoodSuggestions(suggestions, currentTag) {
+        moodSuggestions.innerHTML = '';
+        moodSuggestions.classList.remove('d-none');
+        
+        suggestions.slice(0, 5).forEach(suggestion => {
+            const div = document.createElement('div');
+            div.className = 'mood-suggestion';
+            div.textContent = suggestion;
+            
+            div.addEventListener('click', function() {
+                const currentValue = moodTagsInput.value;
+                const tags = currentValue.split(',').map(tag => tag.trim());
+                tags[tags.length - 1] = suggestion;
+                moodTagsInput.value = tags.join(', ') + ', ';
+                moodTagsInput.focus();
+                hideMoodSuggestions();
+            });
+            
+            moodSuggestions.appendChild(div);
+        });
+    }
+    
+    function hideMoodSuggestions() {
+        moodSuggestions.classList.add('d-none');
+    }
+    
+    // Form submission with loading state
+    form.addEventListener('submit', function(e) {
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding Movie...';
+        
+        // Show loading overlay
+        if (window.MovieCatalog) {
+            window.MovieCatalog.showLoading();
+        }
+        
+        // Re-enable button after 10 seconds as fallback
+        setTimeout(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+            if (window.MovieCatalog) {
+                window.MovieCatalog.hideLoading();
+            }
+        }, 10000);
+    });
+    
+    // Auto-focus first input
+    const firstInput = form.querySelector('input[type="text"]');
+    if (firstInput) {
+        firstInput.focus();
+    }
+    
+    // Add entrance animations
+    const elements = document.querySelectorAll('.fade-in-up, .fade-in-scale');
+    elements.forEach((el, index) => {
+        el.style.animationDelay = `${index * 0.1}s`;
+    });
+    
+    // Form validation feedback
+    const inputs = form.querySelectorAll('.form-control');
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.hasAttribute('required') && !this.value.trim()) {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            }
+        });
+        
+        input.addEventListener('input', function() {
+            this.classList.remove('is-invalid', 'is-valid');
+        });
+    });
+});
+</script>
+{% endblock %}
+

@@ -1,0 +1,28 @@
+<svg width="300" height="450" viewBox="0 0 300 450" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="300" height="450" fill="#2d3748"/>
+  <rect x="1" y="1" width="298" height="448" fill="none" stroke="#4a5568" stroke-width="2" stroke-dasharray="8,4"/>
+  
+  <!-- Film icon -->
+  <g transform="translate(150, 225)">
+    <circle cx="0" cy="0" r="40" fill="#4a5568"/>
+    <path d="M-20 -15 L20 -15 L20 15 L-20 15 Z" fill="#718096"/>
+    <circle cx="-25" cy="-10" r="3" fill="#4a5568"/>
+    <circle cx="-25" cy="0" r="3" fill="#4a5568"/>
+    <circle cx="-25" cy="10" r="3" fill="#4a5568"/>
+    <circle cx="25" cy="-10" r="3" fill="#4a5568"/>
+    <circle cx="25" cy="0" r="3" fill="#4a5568"/>
+    <circle cx="25" cy="10" r="3" fill="#4a5568"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="150" y="300" text-anchor="middle" fill="#718096" font-family="Arial, sans-serif" font-size="16" font-weight="600">
+    No Poster Available
+  </text>
+  
+  <!-- Decorative elements -->
+  <circle cx="50" cy="50" r="2" fill="#4a5568" opacity="0.5"/>
+  <circle cx="250" cy="80" r="2" fill="#4a5568" opacity="0.5"/>
+  <circle cx="80" cy="400" r="2" fill="#4a5568" opacity="0.5"/>
+  <circle cx="220" cy="370" r="2" fill="#4a5568" opacity="0.5"/>
+</svg>
+

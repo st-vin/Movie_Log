@@ -1,0 +1,374 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Movie Catalog{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, var(--darker-bg) 0%, var(--dark-bg) 100%);
+        padding: 4rem 0;
+        margin-bottom: 3rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+        pointer-events: none;
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .welcome-title {
+        font-size: 3.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 1rem;
+        text-shadow: 0 0 30px rgba(229, 9, 20, 0.3);
+    }
+    
+    .welcome-subtitle {
+        font-size: 1.25rem;
+        color: var(--text-secondary);
+        margin-bottom: 2rem;
+    }
+    
+    .quick-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .quick-action-btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 50px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .quick-action-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+    
+    .section-title {
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 2rem;
+        position: relative;
+        padding-left: 1rem;
+    }
+    
+    .section-title::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4px;
+        height: 2rem;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        border-radius: 2px;
+    }
+    
+    .movie-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+    
+    .movie-card-small {
+        background: var(--card-bg);
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        border: 1px solid var(--border-color);
+        backdrop-filter: blur(10px);
+    }
+    
+    .movie-card-small:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px var(--shadow-light);
+        border-color: var(--primary-color);
+    }
+    
+    .movie-poster-small {
+        width: 100%;
+        height: 250px;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    
+    .movie-card-small:hover .movie-poster-small {
+        transform: scale(1.05);
+    }
+    
+    .movie-info-small {
+        padding: 1rem;
+    }
+    
+    .movie-title-small {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        line-height: 1.3;
+    }
+    
+    .movie-meta-small {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-secondary);
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    @media (max-width: 768px) {
+        .welcome-title {
+            font-size: 2.5rem;
+        }
+        
+        .movie-grid {
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+        
+        .quick-actions {
+            justify-content: center;
+        }
+        
+        .quick-action-btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="hero-content text-center">
+            <h1 class="welcome-title fade-in-scale">Welcome to Your Cinema</h1>
+            <p class="welcome-subtitle fade-in-up">Discover, organize, and explore your personal movie collection</p>
+            
+            <div class="quick-actions fade-in-up">
+                <a href="{% url 'movies:add_movie' %}" class="quick-action-btn btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Add Movie
+                </a>
+                <a href="{% url 'movies:movie_list' %}" class="quick-action-btn btn btn-outline-light">
+                    <i class="fas fa-list me-2"></i>Browse Collection
+                </a>
+                <a href="{% url 'movies:batch_add' %}" class="quick-action-btn btn btn-outline-secondary">
+                    <i class="fas fa-upload me-2"></i>Batch Import
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Statistics -->
+<div class="container">
+    <div class="row mb-5 stagger-animation">
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_movies }}</div>
+                <div class="stat-label">TOTAL MOVIES</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-number">{{ watched_movies }}</div>
+                <div class="stat-label">Watched</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-number">{{ want_to_watch }}</div>
+                <div class="stat-label">Want to Watch</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="stat-card">
+                <div class="stat-number">{{ currently_watching }}</div>
+                <div class="stat-label">Currently Watching</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Movies -->
+    {% if recent_movies %}
+    <section class="mb-5">
+        <h2 class="section-title">Recently Added</h2>
+        <div class="movie-grid stagger-animation">
+            {% for movie in recent_movies %}
+            <div class="movie-card-small">
+                <a href="{% url 'movies:movie_detail' movie.pk %}" class="text-decoration-none">
+                    {% if movie.poster_url %}
+                        <img src="{{ MEDIA_URL }}{{ movie.poster_url }}" alt="{{ movie.movie_name }}" class="movie-poster-small">
+                    {% else %}
+                        <div class="movie-poster-small bg-secondary d-flex align-items-center justify-content-center">
+                            <i class="fas fa-film fa-3x text-muted"></i>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="movie-info-small">
+                        <div class="movie-title-small">{{ movie.movie_name }}</div>
+                        <div class="movie-meta-small">
+                            {{ movie.director }} • {{ movie.release_year }}
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <span class="badge status-{{ movie.status|slugify }}">
+                                {{ movie.get_status_display }}
+                            </span>
+                            {% if movie.user_rating %}
+                                <span class="text-warning small">
+                                    <i class="fas fa-star"></i> {{ movie.user_rating }}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="text-center">
+            <a href="{% url 'movies:movie_list' %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-right me-2"></i>View All Movies
+            </a>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Top Rated Movies -->
+    {% if top_rated %}
+    <section class="mb-5">
+        <h2 class="section-title">Top Rated</h2>
+        <div class="movie-grid stagger-animation">
+            {% for movie in top_rated %}
+            <div class="movie-card-small">
+                <a href="{% url 'movies:movie_detail' movie.pk %}" class="text-decoration-none">
+                    {% if movie.poster_url %}
+                        <img src="{{ MEDIA_URL }}{{ movie.poster_url }}" alt="{{ movie.movie_name }}" class="movie-poster-small">
+                    {% else %}
+                        <div class="movie-poster-small bg-secondary d-flex align-items-center justify-content-center">
+                            <i class="fas fa-film fa-3x text-muted"></i>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="movie-info-small">
+                        <div class="movie-title-small">{{ movie.movie_name }}</div>
+                        <div class="movie-meta-small">
+                            {{ movie.director }} • {{ movie.release_year }}
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <span class="hype-score">
+                                <i class="fas fa-fire"></i> {{ movie.hype_score }}
+                            </span>
+                            <span class="text-warning">
+                                <i class="fas fa-star"></i> {{ movie.user_rating }}
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Empty State -->
+    {% if total_movies == 0 %}
+    <section class="empty-state">
+        <i class="fas fa-film"></i>
+        <h3>Your Movie Collection is Empty</h3>
+        <p class="mb-4">Start building your personal cinema by adding your first movie!</p>
+        <div class="d-flex gap-3 justify-content-center flex-wrap">
+            <a href="{% url 'movies:add_movie' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Add Your First Movie
+            </a>
+            <a href="{% url 'movies:csv_import' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-file-csv me-2"></i>Import from CSV
+            </a>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Needs Metadata Alert -->
+    {% if needs_metadata > 0 %}
+    <div class="alert alert-warning d-flex align-items-center" role="alert">
+        <i class="fas fa-exclamation-triangle me-3"></i>
+        <div>
+            <strong>{{ needs_metadata }} movie{{ needs_metadata|pluralize }}</strong> 
+            {{ needs_metadata|pluralize:"is,are" }} missing metadata. 
+            <a href="{% url 'movies:movie_list' %}?metadata=missing" class="alert-link">
+                View and update them
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add entrance animations with stagger
+    const elements = document.querySelectorAll('.fade-in-up, .fade-in-scale');
+    elements.forEach((el, index) => {
+        el.style.animationDelay = `${index * 0.1}s`;
+    });
+    
+    // Animate stat numbers
+    const statNumbers = document.querySelectorAll('.stat-number');
+    statNumbers.forEach(stat => {
+        const finalValue = parseInt(stat.textContent);
+        let currentValue = 0;
+        const increment = Math.ceil(finalValue / 30);
+        
+        const timer = setInterval(() => {
+            currentValue += increment;
+            if (currentValue >= finalValue) {
+                currentValue = finalValue;
+                clearInterval(timer);
+            }
+            stat.textContent = currentValue;
+        }, 50);
+    });
+});
+</script>
+{% endblock %}
+
