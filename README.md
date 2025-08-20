@@ -53,7 +53,7 @@ Movie Catalog transforms the way you organize and discover your personal movie c
 1. **Clone the Repository**
 
    ```bash
-   git clone <repository-url>
+   git clone <https://github.com/st-vin/Movie_Log>
    cd movie_catalog
    ```
 
