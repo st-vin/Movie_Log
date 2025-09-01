@@ -6,23 +6,11 @@
 {% block extra_css %}
 <style>
     .hero-section {
-        background: linear-gradient(135deg, var(--darker-bg) 0%, var(--dark-bg) 100%);
+        background: var(--darker-bg);
         padding: 4rem 0;
         margin-bottom: 3rem;
         position: relative;
-        overflow: hidden;
-    }
-    
-    .hero-section::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-        opacity: 0.3;
-        pointer-events: none;
+        border-bottom: 1px solid var(--border-color);
     }
     
     .hero-content {
@@ -33,12 +21,8 @@
     .welcome-title {
         font-size: 3.5rem;
         font-weight: 700;
-        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: var(--primary-color);
         margin-bottom: 1rem;
-        text-shadow: 0 0 30px rgba(229, 9, 20, 0.3);
     }
     
     .welcome-subtitle {
@@ -56,17 +40,16 @@
     
     .quick-action-btn {
         padding: 0.75rem 1.5rem;
-        border-radius: 50px;
+        border-radius: 6px;
         font-weight: 600;
         text-decoration: none;
         transition: all 0.3s ease;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid var(--border-color);
     }
     
     .quick-action-btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px var(--shadow-medium);
     }
     
     .section-title {
@@ -85,7 +68,7 @@
         transform: translateY(-50%);
         width: 4px;
         height: 2rem;
-        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        background: var(--primary-color);
         border-radius: 2px;
     }
     

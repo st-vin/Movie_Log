@@ -43,12 +43,12 @@ class OMDbService:
             logger.error(f"OMDb API request failed: {e}")
             return None
     
-    def search_by_title(self, title: str, year: Optional[int] = None, plot: str = 'full') -> Optional[Dict]:
-        """Search for a movie by title"""
+    def search_by_title(self, title: str, year: Optional[int] = None, plot: str = 'full', content_type: str = 'movie') -> Optional[Dict]:
+        """Search by exact title. content_type can be 'movie' or 'series'."""
         params = {
             't': title,
             'plot': plot,
-            'type': 'movie'
+            'type': content_type
         }
         if year:
             params['y'] = year
@@ -63,11 +63,11 @@ class OMDbService:
         }
         return self._make_request(params)
     
-    def search_movies(self, query: str, year: Optional[int] = None) -> Optional[Dict]:
-        """Search for movies (returns multiple results)"""
+    def search_movies(self, query: str, year: Optional[int] = None, content_type: str = 'movie') -> Optional[Dict]:
+        """Search (multiple results). content_type can be 'movie' or 'series'."""
         params = {
             's': query,
-            'type': 'movie'
+            'type': content_type
         }
         if year:
             params['y'] = year
@@ -164,7 +164,7 @@ class OMDbService:
         return formatted_data
     
     def find_movie(self, title: str, year: Optional[int] = None, imdb_id: Optional[str] = None) -> Optional[Dict]:
-        """Find a movie and return formatted data"""
+        """Find a movie or series and return formatted data. Prefer exact match movie; then exact series; avoid loose first result."""
         omdb_data = None
         
         # Try searching by IMDb ID first if available
@@ -173,7 +173,11 @@ class OMDbService:
         
         # If no IMDb ID or search failed, try by title
         if not omdb_data:
-            omdb_data = self.search_by_title(title, year)
+            # Attempt movie first
+            omdb_data = self.search_by_title(title, year, content_type='movie')
+            if not omdb_data:
+                # Then series
+                omdb_data = self.search_by_title(title, year, content_type='series')
         
         if omdb_data:
             return self.format_movie_data(omdb_data)

@@ -18,6 +18,7 @@ urlpatterns = [
     path('api/movie/<int:movie_id>/status/', views.update_movie_status, name='update_status'),
     path('api/movie/<int:movie_id>/rating/', views.update_movie_rating, name='update_rating'),
     path('api/movie/<int:movie_id>/refresh/', views.refresh_metadata, name='refresh_metadata'),
+    path('api/movie/<int:movie_id>/poster/url/', views.set_poster_from_url, name='set_poster_from_url'),
     path('api/search/', views.api_search_movies, name='api_search'),
     path('api/movie/<int:movie_id>/delete/', views.delete_movie, name='delete_movie'),
 ]

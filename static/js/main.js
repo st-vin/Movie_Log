@@ -10,8 +10,8 @@ document.addEventListener('DOMContentLoaded', function() {
     initTooltips();
     initLazyLoading();
     
-    // Add stagger animation to cards
-    addStaggerAnimation();
+    // Initialize theme on page load
+    updateThemeIcon(document.documentElement.getAttribute('data-theme') || 'dark');
 });
 
 // Theme Toggle
@@ -278,6 +278,65 @@ function refreshMetadata(movieId) {
     });
 }
 
+// Set poster from external URL (minimal prompt-based UI)
+function setPosterFromUrl(movieId, url) {
+    const providedUrl = (url || '').trim();
+    const finalUrl = providedUrl || prompt('Paste the poster image URL (http/https):');
+    if (!finalUrl) return;
+    if (!(finalUrl.startsWith('http://') || finalUrl.startsWith('https://'))) {
+        showNotification('URL must start with http:// or https://', 'warning');
+        return;
+    }
+
+    showLoading();
+    fetch(`/api/movie/${movieId}/poster/url/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({ url: finalUrl })
+    })
+    .then(resp => resp.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            showNotification('Poster updated', 'success');
+            // Attempt lightweight UI update; fallback to reload
+            const mediaBase = window.MEDIA_URL || '/media/';
+            const fullPosterUrl = data.poster_url ? mediaBase + data.poster_url : null;
+
+            // Update large poster image on detail page
+            const largePoster = document.querySelector('.movie-poster-large');
+            if (largePoster && fullPosterUrl) {
+                largePoster.src = fullPosterUrl;
+            }
+            // Update hero background if present
+            const heroBg = document.querySelector('.movie-hero-bg');
+            if (heroBg && fullPosterUrl) {
+                heroBg.style.backgroundImage = `url('${fullPosterUrl}')`;
+            }
+            // Update card poster if in list view
+            const cardPoster = document.querySelector(`[data-movie-id="${movieId}"] .movie-poster`);
+            if (cardPoster && fullPosterUrl) {
+                cardPoster.src = fullPosterUrl;
+            }
+
+            // If nothing updated, reload to ensure consistency
+            if (!largePoster && !cardPoster) {
+                setTimeout(() => window.location.reload(), 500);
+            }
+        } else {
+            showNotification(data.message || 'Failed to update poster', 'error');
+        }
+    })
+    .catch(err => {
+        hideLoading();
+        showNotification('Failed to update poster', 'error');
+        console.error(err);
+    });
+}
+
 // Star rating helpers
 function highlightStars(stars, index) {
     stars.forEach((star, i) => {
@@ -403,19 +462,37 @@ function initLazyLoading() {
     }
 }
 
-// Animations
-function addStaggerAnimation() {
-    const cards = document.querySelectorAll('.movie-card, .stat-card');
-    cards.forEach((card, index) => {
-        card.style.animationDelay = `${index * 0.1}s`;
-        card.classList.add('fade-in-up');
-    });
+// Theme initialization helper
+function initializeTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeIcon(savedTheme);
 }
 
 // Utility Functions
 function getCsrfToken() {
-    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
-           document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || '';
+    // Prefer hidden input token (when inside a form)
+    const inputToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+    if (inputToken) return inputToken;
+
+    // Then try meta tag token (if template provides it)
+    const metaToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
+    if (metaToken) return metaToken;
+
+    // Finally, fall back to csrftoken cookie (standard Django name)
+    try {
+        const cookieString = document.cookie || '';
+        const cookies = cookieString.split(';').map(c => c.trim());
+        for (let i = 0; i < cookies.length; i++) {
+            if (cookies[i].startsWith('csrftoken=')) {
+                return decodeURIComponent(cookies[i].substring('csrftoken='.length));
+            }
+        }
+    } catch (e) {
+        // ignore
+    }
+
+    return '';
 }
 
 function showLoading() {
@@ -554,6 +631,7 @@ window.MovieCatalog = {
     updateMovieStatus,
     updateMovieRating,
     refreshMetadata,
+    setPosterFromUrl,
     showNotification,
     showLoading,
     hideLoading

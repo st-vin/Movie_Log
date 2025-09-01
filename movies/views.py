@@ -61,6 +61,14 @@ class MovieListView(ListView):
         if genre_filter:
             queryset = queryset.filter(metadata_json__genres__icontains=genre_filter)
         
+        # Media type filter
+        media_type = self.request.GET.get('type', '')
+        if media_type:
+            if media_type == 'documentary':
+                queryset = queryset.filter(metadata_json__genres__icontains='Documentary')
+            else:
+                queryset = queryset.filter(metadata_json__type__iexact=media_type)
+        
         # Mood filter
         mood_filter = self.request.GET.get('mood', '')
         if mood_filter:
@@ -115,6 +123,7 @@ class MovieListView(ListView):
         context['year_to'] = self.request.GET.get('year_to', '')
         context['min_rating'] = self.request.GET.get('min_rating', '')
         context['sort_by'] = self.request.GET.get('sort', '-created_at')
+        context['media_type'] = self.request.GET.get('type', '')
         
         # Get unique values for filter dropdowns
         context['status_choices'] = Movie.WATCH_STATUS_CHOICES
@@ -174,7 +183,9 @@ class AddMovieView(CreateView):
         # Fetch metadata for the new movie
         service = MovieMetadataService()
         try:
-            service.update_movie_metadata(self.object, force_refresh=True)
+            # Pass content_type hint from form if provided
+            content_type = form.cleaned_data.get('content_type')
+            service.update_movie_metadata(self.object, force_refresh=True, content_type=content_type)
             messages.success(
                 self.request, 
                 f'Movie "{self.object.movie_name}" added successfully with metadata!'
@@ -488,3 +499,54 @@ def dashboard(request):
     }
     
     return render(request, 'movies/dashboard.html', context)
+
+
+@require_http_methods(["POST"])
+def set_poster_from_url(request, movie_id):
+    """AJAX endpoint to set/update poster by providing an image URL.
+
+    Expects JSON body: { "url": "https://..." }
+    Downloads and caches the image, saves relative cached path to metadata_json.cached_poster_path
+    and returns the relative poster_url for display.
+    """
+    movie = get_object_or_404(Movie, id=movie_id)
+
+    try:
+        data = json.loads(request.body)
+        poster_url = (data.get('url') or '').strip()
+        if not poster_url:
+            return JsonResponse({'success': False, 'message': 'Poster URL is required'}, status=400)
+
+        # Basic validation
+        if not (poster_url.startswith('http://') or poster_url.startswith('https://')):
+            return JsonResponse({'success': False, 'message': 'URL must start with http:// or https://'}, status=400)
+
+        service = MovieMetadataService()
+        # Try to reuse cache if already present; otherwise download now
+        cached_path = service.get_cached_poster_path(poster_url, movie.movie_name)
+        if not cached_path:
+            return JsonResponse({'success': False, 'message': 'Failed to download poster'}, status=500)
+
+        # Store relative path under MEDIA_ROOT with forward slashes
+        from django.conf import settings
+        import os
+        relative_path = os.path.relpath(cached_path, settings.MEDIA_ROOT).replace('\\', '/')
+        if relative_path.startswith('media/'):
+            relative_path = relative_path[len('media/'):]
+
+        # Update movie metadata_json
+        metadata = movie.metadata_json or {}
+        metadata['cached_poster_path'] = relative_path
+        # Also keep original source url for reference
+        metadata['poster_path'] = poster_url
+        movie.metadata_json = metadata
+        movie.save(update_fields=['metadata_json', 'last_updated'])
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Poster updated successfully',
+            'poster_url': movie.poster_url
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)

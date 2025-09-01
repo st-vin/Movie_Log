@@ -7,9 +7,8 @@
 <style>
     .filter-sidebar {
         background: var(--card-bg);
-        border-radius: 12px;
+        border-radius: 8px;
         padding: 1.5rem;
-        backdrop-filter: blur(10px);
         border: 1px solid var(--border-color);
         position: sticky;
         top: 100px;
@@ -42,17 +41,16 @@
     
     .movie-card {
         background: var(--card-bg);
-        border-radius: 12px;
+        border-radius: 8px;
         overflow: hidden;
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transition: all 0.3s ease;
         border: 1px solid var(--border-color);
-        backdrop-filter: blur(10px);
         position: relative;
     }
     
     .movie-card:hover {
-        transform: translateY(-8px) scale(1.02);
-        box-shadow: 0 20px 40px var(--shadow-heavy);
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px var(--shadow-medium);
         border-color: var(--primary-color);
     }
     
@@ -60,12 +58,11 @@
         width: 100%;
         height: 350px;
         object-fit: cover;
-        transition: all 0.3s ease;
+        transition: transform 0.3s ease;
     }
     
     .movie-card:hover .movie-poster {
         transform: scale(1.05);
-        filter: brightness(1.1);
     }
     
     .movie-info {
@@ -242,6 +239,17 @@
                         </select>
                     </div>
                     
+                    <!-- Media Type -->
+                    <div class="filter-group">
+                        <label class="filter-title">Media Type</label>
+                        <select name="type" class="form-control">
+                            <option value="">All Types</option>
+                            <option value="movie" {% if request.GET.type == 'movie' %}selected{% endif %}>Movie</option>
+                            <option value="series" {% if request.GET.type == 'series' %}selected{% endif %}>Series</option>
+                            <option value="documentary" {% if request.GET.type == 'documentary' %}selected{% endif %}>Documentary</option>
+                        </select>
+                    </div>
+                    
                     <!-- Mood -->
                     <div class="filter-group">
                         <label class="filter-title">Mood</label>
@@ -285,11 +293,14 @@
                         <label class="filter-title">Minimum Rating</label>
                         <select name="min_rating" class="form-control">
                             <option value="">Any Rating</option>
-                            {% for i in "12345678910"|make_list %}
+                            {% for i in "123456789"|make_list %}
                                 <option value="{{ i }}" {% if min_rating == i %}selected{% endif %}>
                                     {{ i }}+ Stars
                                 </option>
                             {% endfor %}
+                            <option value="10" {% if min_rating == "10" %}selected{% endif %}>
+                                10+ Stars
+                            </option>
                         </select>
                     </div>
                     
@@ -425,6 +436,11 @@
                                             <i class="fas fa-ellipsis-v"></i>
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-dark">
+                                            <li>
+                                                <button class="dropdown-item" onclick="window.MovieCatalog && window.MovieCatalog.setPosterFromUrl({{ movie.id }})">
+                                                    <i class="fas fa-image me-2"></i>Set Poster URL
+                                                </button>
+                                            </li>
                                             <li>
                                                 <a class="dropdown-item" href="{% url 'movies:movie_detail' movie.pk %}">
                                                     <i class="fas fa-eye me-2"></i>View Details

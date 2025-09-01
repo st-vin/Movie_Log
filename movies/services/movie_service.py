@@ -26,7 +26,7 @@ class MovieMetadataService:
         os.makedirs(self.cache_dir, exist_ok=True)
     
     def fetch_metadata(self, title: str, director: Optional[str] = None, 
-                      year: Optional[int] = None) -> Dict:
+                      year: Optional[int] = None, content_type: Optional[str] = None) -> Dict:
         """
         Fetch movie metadata using TMDb as primary source and OMDb as fallback
         """
@@ -34,7 +34,7 @@ class MovieMetadataService:
         
         # Try TMDb first
         logger.info(f"Fetching metadata for '{title}' from TMDb")
-        tmdb_data = self.tmdb_service.find_movie(title, year, director)
+        tmdb_data = self.tmdb_service.find_movie(title, year, director, content_type)
         
         if tmdb_data:
             metadata.update(tmdb_data)
@@ -43,8 +43,12 @@ class MovieMetadataService:
         else:
             logger.warning(f"TMDb lookup failed for '{title}', trying OMDb")
             
-            # Fallback to OMDb
+            # Fallback to OMDb (respect content_type when given)
             omdb_data = self.omdb_service.find_movie(title, year)
+            if not omdb_data and content_type:
+                omdb_kind = 'series' if content_type == 'series' else 'movie'
+                omdb_raw = self.omdb_service.search_by_title(title, year, content_type=omdb_kind)
+                omdb_data = self.omdb_service.format_movie_data(omdb_raw) if omdb_raw else None
             if omdb_data:
                 metadata.update(omdb_data)
                 metadata['source'] = 'omdb'
@@ -137,7 +141,7 @@ class MovieMetadataService:
         # If not cached, try to cache it now
         return self.cache_poster_image(poster_url, movie_title)
     
-    def update_movie_metadata(self, movie_instance, force_refresh: bool = False):
+    def update_movie_metadata(self, movie_instance, force_refresh: bool = False, content_type: Optional[str] = None):
         """
         Update a movie instance with fresh metadata
         """
@@ -156,7 +160,8 @@ class MovieMetadataService:
         metadata = self.fetch_metadata(
             movie_instance.movie_name,
             movie_instance.director,
-            movie_instance.release_year
+            movie_instance.release_year,
+            content_type
         )
         
         if metadata and metadata.get('source') != 'none':

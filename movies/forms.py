@@ -6,6 +6,21 @@ from .models import Movie
 class MovieForm(forms.ModelForm):
     """Form for adding/editing a single movie"""
     
+    CONTENT_TYPE_CHOICES = [
+        ('movie', 'Movie'),
+        ('series', 'Series'),
+        ('documentary', 'Documentary'),
+    ]
+
+    content_type = forms.ChoiceField(
+        choices=CONTENT_TYPE_CHOICES,
+        initial='movie',
+        widget=forms.RadioSelect,
+        label='Media Type',
+        required=False,
+        help_text='Select the media type to improve search accuracy'
+    )
+
     # Override JSONField auto form field to accept a simple comma-separated string
     mood_tags = forms.CharField(
         required=False,

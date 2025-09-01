@@ -244,6 +244,17 @@
             <form method="post" id="add-movie-form">
                 {% csrf_token %}
                 
+                <!-- Media Type -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-photo-video"></i>Media Type
+                    </label>
+                    <div class="d-flex gap-4">
+                        {{ form.content_type }}
+                    </div>
+                    <div class="form-text">Select whether this is a movie, series, or documentary</div>
+                </div>
+
                 <!-- Basic Information -->
                 <div class="form-row">
                     <div class="form-group">
