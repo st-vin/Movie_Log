@@ -52,3 +52,5 @@ coverage.xml
 node_modules/
 dist/
 build/
+
+start_movie_catalog.bat
