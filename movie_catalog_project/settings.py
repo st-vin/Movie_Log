@@ -38,6 +38,10 @@ SECRET_KEY = config('SECRET_KEY', default='change-me')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
+# API Keys
+TMDB_API_KEY = config('TMDB_API_KEY', default='')
+OMDB_API_KEY = config('OMDB_API_KEY', default='')
+
 ALLOWED_HOSTS = ['*']  # Allow all hosts for development and deployment
 
 
